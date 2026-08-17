@@ -14,5 +14,6 @@ typedef struct BlockHeader
 void mem_init();
 extern void *g_mem_pool;
 extern BlockHeader *g_free_list;
+void mem_free(void *ptr);
 
 #endif
