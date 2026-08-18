@@ -28,58 +28,57 @@ current = current->next;
 }
 return NULL;
 }
+
 void mem_free(void *ptr)
 {
-    if(ptr == NULL)
+    if (ptr == NULL)
+    {
         return;
-    // 拿到块头
-    BlockHeader 
-*free_blk = (BlockHeader*)((char*)ptr - sizeof(BlockHeader));
+    }
+    // 获取内存块头部
+    BlockHeader *free_blk = (BlockHeader*)((char*)ptr - sizeof(BlockHeader));
 
-    BlockHeader 
-*cur = g_free_list;
-    BlockHeader 
-*pre = NULL;
-    // 按地址顺序找到插入位置
+    BlockHeader *cur = g_free_list;
+    BlockHeader *pre = NULL;
+
+    // 按地址顺序，找到插入位置
     while(cur != NULL && cur < free_blk)
     {
-        pre 
-= cur;
-        cur 
-= cur->next;
+        pre = cur;
+        cur = cur->next;
     }
-    // 插入空闲链表
-    free_blk
-->next = cur;
-    if(pre == NULL)
-        g_free_list 
-= free_blk;
-    else
-        pre
-->next = free_blk;
 
-    // 向后合并（右边相邻）
+    // 把释放的块插入空闲链表
+    if(pre == NULL)
+    {
+        free_blk->next = g_free_list;
+        g_free_list = free_blk;
+    }
+    else
+    {
+        free_blk->next = pre->next;
+        pre->next = free_blk;
+    }
+
+    // 和后面相邻块合并
     if(free_blk->next != NULL)
     {
         char *end = (char*)free_blk + sizeof(BlockHeader) + free_blk->size;
         if(end == (char*)free_blk->next)
         {
-            free_blk
-->size += sizeof(BlockHeader) + free_blk->next->size;
-            free_blk
-->next = free_blk->next->next;
+            free_blk->size += sizeof(BlockHeader) + free_blk->next->size;
+            free_blk->next = free_blk->next->next;
         }
     }
-    // 向前合并（左边相邻）
+
+    // 和前面相邻块合并
     if(pre != NULL)
     {
         char *pre_end = (char*)pre + sizeof(BlockHeader) + pre->size;
         if(pre_end == (char*)free_blk)
         {
-            pre
-->size += sizeof(BlockHeader) + free_blk->size;
-            pre
-->next = free_blk->next;
+            pre->size += sizeof(BlockHeader) + free_blk->size;
+            pre->next = free_blk->next;
         }
     }
 }
